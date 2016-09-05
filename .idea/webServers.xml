@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="7f4c8c66-bc84-4f79-be2b-16dd0391f6d0" name="Junseok" url="http://kafuuchino.one">
+        <fileTransfer host="kafuuchino.one" port="22" rootFolder="/home/yec/sharedata" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
