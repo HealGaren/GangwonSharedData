@@ -85,7 +85,7 @@
 
 > Params
 
-    Any Single File (PNG)
+    file : User Image (File, PNG)
 
 > Response
 
