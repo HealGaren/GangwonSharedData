@@ -2,6 +2,17 @@
 <project version="4">
   <component name="PublishConfigData" serverName="Junseok">
     <serverData>
+      <paths name="Applepi">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/azureuser/yechan/Gangwon" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/node_modules" />
+            <excludedPath path="/home/azureuser/yechan/Gangwon/node_modules" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
       <paths name="Junseok">
         <serverdata>
           <mappings>

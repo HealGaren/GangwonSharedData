@@ -5,154 +5,179 @@ var mongoose = require('mongoose');
 var crypto = require('crypto');
 
 var schema = new mongoose.Schema({
-    createdDate: {
-        type: Date,
-        default: Date.now
-    },
-    localEmail: {
-        type: String
-    },
-    localSalt: {
-        type: String
-    },
-    localHash: {
-        type: String
-    },
-    localExist: {
+    isMale: {
         type: Boolean,
-        default: false
+        require: true
+    },
+    age: {
+        type: Number,
+        require: true
+    },
+    purpose: {
+        type: Number,
+        require: true,
+        min: 0,
+        max: (1 << 8) - 1
+        /*비트 연산용
+         1 << 0 : 가족 여행
+         1 << 1 : 관광
+         1 << 2 : 낭만
+         1 << 3 : 도심
+         1 << 4 : 럭셔리
+         1 << 5 : 레져
+         1 << 6 : 비즈니스
+         1 << 7 : 식도락
+         */
+    },
+
+    budget: {
+        type: Number,
+        require: true,
+        min: 0,
+        max: 2
+        /*
+         0 : 저
+         1 : 중
+         2 : 고
+         */
+    },
+    job: {
+        type: String,
+        require: true
     },
     name: {
+        type: String,
+        require: true
+    },
+    id: {
+        type: String,
+        require: true
+    },
+    salt: {
+        type: String,
+        require: true,
+    },
+    hash: {
+        type: String,
+        require: true
+    },
+    token: {
         type: String
     }
 });
 
-schema.methods.addLocalLogin = function (email, password, name) {
-    var salt = Math.round((new Date().valueOf() * Math.random())) + "";
-    var hashedPass = crypto.createHash("sha512").update(password + salt).digest("hex");
-
-    this.localEmail = email;
-    this.localSalt = salt;
-    this.localHash = hashedPass;
-    this.name = name;
-
-    this.localExist = true;
-
-    return this.save();
-};
-
+/**
+ * @param {string} password
+ */
 schema.methods.equalsPassword = function (password) {
-    var hash = crypto.createHash('sha512').update(password + this.localSalt).digest('hex');
-    return hash == this.localHash;
+    var hash = crypto.createHash('sha512').update(password + this.salt).digest('hex');
+    return hash == this.hash;
 };
 
-schema.statics.registerLocal = function (email, password, phoneNumber, name) {
-    var that = this;
-    return that.findOne({localEmail: email}).exec()
-        .then(function (user) {
-            if (!user) return new that().addLocalLogin(email, password, name)
-                .then(function (user) {
-                    return user.addPhoneNumber(phoneNumber);
-                });
-            else throw {
-                message: "이미 존재하는 유저입니다.",
-                isClient: true
-            };
+schema.methods.genToken = function(){
+    return new Promise((resolved, reject)=>{
+        crypto.randomBytes(48, (err, buffer) => {
+            if(err) reject(err);
+            this.token = this.id + buffer.toString('hex');
+            resolved(this.save());
         });
+    });
 };
 
+/**
+ * @param {boolean} isMale
+ * @param {number} age
+ * @param {number} purpose
+ * @param {number} budget
+ * @param {string} job
+ * @param {string} name
+ * @param {string} id
+ * @param {string} password
+ */
+schema.statics.register = function (isMale, age, purpose, budget, job, name, id, password) {
 
-schema.statics.loginLocal = function (email, password) {
-    return this.findOne({localEmail: email}).exec()
-        .then(function (user) {
-            if (!user) throw {
-                message: "이메일이 존재하지 않습니다.",
-                isClient: true
+    return this.findOne({id:id}).exec()
+        .then(user => {
+            if (user) throw {
+                message: "이미 존재하는 유저입니다.",
+                statusCode: 409,
             };
             else {
-                if (user.equalsPassword(password)) return user;
-                else throw {
-                    message: "비밀번호가 일치하지 않습니다.",
-                    isClient: true
-                };
+                var salt = Math.round((new Date().valueOf() * Math.random())) + "";
+                var hashedPass = crypto.createHash("sha512").update(password + salt).digest("hex");
+
+                return new this({
+                    isMale: isMale,
+                    age: age,
+                    purpose: purpose,
+                    budget: budget,
+                    job: job,
+                    name: name,
+                    id: id,
+                    salt: salt,
+                    hash: hashedPass
+                }).save();
             }
+        }, err => {
+            throw {
+                message: "오류가 발생했습니다: " + err.message,
+                statusCode: 500
+            };
         });
 };
 
-schema.statics.loginFacebook = function (id, email) {
-    var that = this;
-    return that.findOne({facebookID: id}).exec()
-        .then(function (user) {
-            if (user) return user;
-            else return that.registerFacebook(id, email);
+/**
+ * @param {string} id
+ * @param {string} password
+ */
+schema.statics.login = function (id, password) {
+
+    return this.findOne({id: id}).exec()
+        .then(user => {
+            if (!user) throw {
+                message: "아이디가 존재하지 않습니다.",
+                statusCode: 401
+            };
+            else {
+                if (user.equalsPassword(password)) {
+                    if(!user.token) return user.genToken();
+                }
+                else throw {
+                    message: "비밀번호가 일치하지 않습니다.",
+                    statusCode: 401
+                };
+            }
+        }, err => {
+            throw {
+                message: "오류가 발생했습니다: " + err.message,
+                statusCode: 500
+            };
+        });
+};
+
+/**
+ *
+ * @param {string} token
+ */
+schema.statics.tokenLogin = function (token) {
+
+    return this.findOne({token: token}).exec()
+        .then(user => {
+            if (!user) throw {
+                message: "토큰이 유효하지 않습니다.",
+                statusCode: 401
+            };
+            else return user;
+        }, err => {
+            throw {
+                message: "오류가 발생했습니다: " + err.message,
+                statusCode: 500
+            };
         });
 };
 
 schema.statics.removeUser = function (id) {
     return this.findByIdAndRemove(id).exec();
-};
-
-schema.statics.addFriend = function (id, friendId) {
-    return this.findByIdAndUpdate(id, {$push: {friends: friendId}}).exec();
-};
-
-schema.statics.removeFriend = function (id, friendId) {
-    return this.findByIdAndUpdate(id, {$pull: {friends: friendId}}).exec();
-};
-
-
-schema.statics.rename = function (id, name) {
-    return this.findByIdAndUpdate(id, {name: name}).exec();
-};
-
-
-schema.statics.getUser = function (id) {
-    var that = this;
-    return that.findById(id).exec();
-};
-
-
-
-schema.statics.getFriendsIdArray = function (id) {
-    var that = this;
-    return that.findById(id).exec()
-        .then(function (user) {
-            return user.friends;
-        });
-};
-
-schema.statics.getFriendsArray = function (id) {
-    var that = this;
-    return that.findById(id).exec()
-        .then(function (user) {
-            return that.find({
-                '_id': {$in: user.friends}
-            }).sort('name.last');
-        });
-};
-
-schema.statics.getUsersArray = function (ids) {
-    var that = this;
-    return that.find({
-        '_id': {$in: ids}
-    }).sort('name.last').exec();
-};
-
-schema.statics.getGroupsIdArray = function (id) {
-    var that = this;
-    return that.findById(id).exec()
-        .then(function (user) {
-            return user.groups;
-        });
-};
-
-schema.statics.updateLocation = function (id, longi, lati) {
-    return this.findByIdAndUpdate(id, {lastLongi: longi, lastLati: lati}, {new:true}).exec();
-};
-
-
-schema.statics.addGroup = function (id, roomId) {
-    return this.findByIdAndUpdate(id, {$push: {groups: roomId}}, {new:true}).exec();
 };
 
 var model = mongoose.model('users', schema);

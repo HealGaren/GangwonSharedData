@@ -9,8 +9,7 @@ var crypto = require('crypto');
 var mongo = require('../mongo');
 
 var passport = require('passport')
-    , LocalStrategy = require('passport-local').Strategy
-    , FacebookStrategy = require('passport-facebook').Strategy;
+    , LocalStrategy = require('passport-local').Strategy;
 
 
 var objects = null;
@@ -40,28 +39,11 @@ exports.init = function (app) {
                 passReqToCallback: true
             },
             function (req, email, password, done) {
-                mongo.User.loginLocal(email, password)
+                mongo.User.login(email, password)
                     .then(function (user) {
                         done(null, user);
                     }, function (err) {
                         if (err.isClient) done(null, false, {message: err.message});
-                        else done(err, false);
-                    });
-            }
-        ));
-
-        passport.use(new FacebookStrategy({
-                clientID: '1712738072330917',
-                clientSecret: 'e7a58f520031e7f0f214f9ddd3099740',
-                callbackURL: 'http://hy.applepi.kr/login/facebook/callback',
-                profileFields: ['id', 'emails']
-            },
-            function (accessToken, refreshToken, profile, done) {
-                mongo.User.loginFacebook(profile.id, profile.emails[0].value)
-                    .then(function (user) {
-                        done(null, user);
-                    }, function (err) {
-                        if (err.isClient) done(null, false, err.message);
                         else done(err, false);
                     });
             }

@@ -11,5 +11,7 @@ db.once('open', function(){
 });
 
 module.exports = {
-    User: require('./user')
+    User: require('./user'),
+    Spot: require('./spot'),
+    Star: require('./star')
 };

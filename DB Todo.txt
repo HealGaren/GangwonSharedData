@@ -1,10 +1,15 @@
-Spot
+Spots
 
 - 사진(nullable)
-- 위치
+- 위도/경도
+- 주소지
 - 전화번호(nullable)
 - 업종(음식/관광명소/숙박업소)
 - 업종 세부 분류(nullable)
-- 별점들
-- 댓글들
+- 별점들(Stars mongooseID array)
 
+Stars
+
+- 별점(1~10)
+- 댓글 내용(nullable)
+- 쓴 사람(Users mongooseID)
