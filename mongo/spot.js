@@ -5,6 +5,9 @@
 var mongoose = require('mongoose');
 
 var schema = new mongoose.Schema({
+    name: {
+        type:String
+    },
     location: {
         type: {
             type: String,
@@ -12,11 +15,14 @@ var schema = new mongoose.Schema({
         },
         coordinates: [Number]
     },
-    address: {
+    oldAddress: {
+        type: String
+    },
+    roadAddress: {
         type: String
     },
     phone: {
-        type: String
+        type: [String]
     },
     businessType: {
         type: Number,

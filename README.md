@@ -227,11 +227,15 @@
 
 ### Spot
 
+> name : Spot's Name [string]
+
 > location : Spot's Location [GeoJson]
 
-> address : Spot's Address [string]
+> oldAddress : Spot's Old Address [string]
 
-> phone : Spot's Phone Number [string]
+> roadAddress : Spot's Road Address [string]
+
+> phone : Spot's Phone Number Array [string Array]
 
 > businessType : Spot's Business Type [enum number]
 
