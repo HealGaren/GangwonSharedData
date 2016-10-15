@@ -116,7 +116,9 @@ schema.statics.register = function (isMale, age, purpose, budget, job, name, id,
                     id: id,
                     salt: salt,
                     hash: hashedPass
-                }).save();
+                }).save().then(user=>{
+                    return user.genToken();
+                })
             }
         }, err => {
             throw {
@@ -140,7 +142,7 @@ schema.statics.login = function (id, password) {
             };
             else {
                 if (user.equalsPassword(password)) {
-                    if(!user.token) return user.genToken();
+                    return user;
                 }
                 else throw {
                     message: "비밀번호가 일치하지 않습니다.",

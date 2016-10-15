@@ -9,8 +9,7 @@
 function parseParam(paramPairs, params) {
     return paramPairs.every(pair=> {
         var key = pair[0], typename = pair[1], require = pair[2];
-
-        if (!params.hasOwnProperty(key)) {
+        if (!Object.prototype.hasOwnProperty.call(params, key)) {
             if(require) throw {
                 statusCode: 400,
                 message: key + ' 값이 존재하지 않습니다.'
@@ -36,7 +35,7 @@ function parseParam(paramPairs, params) {
             statusCode: 400,
             message: key + ' 값 ' + value + '은(는) ' + currentType + " 형식입니다. " + typename + ' 형식이 아닙니다.'
         };
-        params[key] = value;
+        params[key] = result;
         return true;
     });
 }
@@ -46,7 +45,7 @@ function parseParam(paramPairs, params) {
  */
 var ParamsEnum = {
     BODY: 0,
-    PARAMS: 1
+    QUERY: 1
 };
 
 /**
@@ -62,8 +61,8 @@ function bindParseParam(paramPairs, paramsType) {
             case ParamsEnum.BODY:
                 params = req.body;
                 break;
-            case ParamsEnum.PARAMS:
-                params = req.params;
+            case ParamsEnum.QUERY:
+                params = req.query;
                 break;
         }
         try {
@@ -84,7 +83,7 @@ exports.parseParam = {
     /**
      * @param {Array.<Array.<string>>} paramPairs
      */
-    params: (paramPairs) => bindParseParam(paramPairs, ParamsEnum.PARAMS)
+    query: (paramPairs) => bindParseParam(paramPairs, ParamsEnum.QUERY)
 };
 
 

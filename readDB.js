@@ -27,7 +27,8 @@ console.log('파일 쓰기 완료!');
 process.exit();
 
 function phoneStrToArray(str){
-    return str.replace(/[/\-X]+/g).split(/\s+/).filter(str=>str);
+    return str.replace(/[/\-X]+/g, '').split(/\s+/).filter(str=>str);
+
 }
 
 
@@ -49,9 +50,15 @@ function processFood(path, foodName) {
         };
 
         if (food.LNG != '' && food.LAT != '') {
+            var coord = [parseFloat(food.LNG), parseFloat(food.LAT)];
+            if(coord[0] < coord[1]){
+                var temp = coord[0];
+                coord[0] = coord[1];
+                coord[1] = temp;
+            }
             obj.location = {
                 type: 'Point',
-                coordinates: [food.LNG, food.LAT]
+                coordinates: coord
             };
         }
 
@@ -84,9 +91,15 @@ function processMinbak(){
         };
 
         if (minbak.LNG != '' && minbak.LAT != '') {
+            var coord = [parseFloat(minbak.LNG), parseFloat(minbak.LAT)];
+            if(coord[0] < coord[1]){
+                var temp = coord[0];
+                coord[0] = coord[1];
+                coord[1] = temp;
+            }
             obj.location = {
                 type: 'Point',
-                coordinates: [minbak.LNG, minbak.LAT]
+                coordinates: coord
             };
         }
 
@@ -122,9 +135,15 @@ function processTrip(){
             };
 
             if (trip.LNG != '' && trip.LAT != '') {
+                var coord = [parseFloat(trip.LNG), parseFloat(trip.LAT)];
+                if(coord[0] < coord[1]){
+                    var temp = coord[0];
+                    coord[0] = coord[1];
+                    coord[1] = temp;
+                }
                 obj.location = {
                     type: 'Point',
-                    coordinates: [trip.LNG, trip.LAT]
+                    coordinates:coord
                 };
             }
         }

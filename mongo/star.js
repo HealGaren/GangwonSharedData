@@ -42,6 +42,11 @@ schema.statics.newStar = function(score, content, ownerId, spotId){
     return new this(obj).save();
 };
 
+schema.statics.updateStar = function(starId, score, content){
+    console.log(starId);
+    return this.findByIdAndUpdate(starId, {$set:{score:score, content:content}}).exec();
+};
+
 var model = mongoose.model('stars', schema);
 
 module.exports = model;
