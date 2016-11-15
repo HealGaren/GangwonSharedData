@@ -6,7 +6,7 @@ var mongoose = require('mongoose');
 
 var schema = new mongoose.Schema({
     name: {
-        type:String
+        type: String
     },
     location: {
         type: {
@@ -26,8 +26,8 @@ var schema = new mongoose.Schema({
     },
     businessType: {
         type: Number,
-        min:0,
-        max:2
+        min: 0,
+        max: 2
         /*
          0 : 일반음식점
          1 : 관광명소
@@ -54,18 +54,18 @@ schema.statics.findSpot = function (query, limit, skip, purpose, budget, longitu
     var queryObj = {};
 
     /* TODO
-    query       done
-    limit       done
-    skip        done
-    budget      yet
-    longitude   done
-    latitude    done
-    maxDistance done
-    minScore    done
-    address     done
+     query       done
+     limit       done
+     skip        done
+     budget      yet
+     longitude   done
+     latitude    done
+     maxDistance done
+     minScore    done
+     address     done
      */
 
-    if(longitude !== undefined && latitude !== undefined && maxDistance !== undefined) queryObj.location = {
+    if (longitude !== undefined && latitude !== undefined && maxDistance !== undefined) queryObj.location = {
         $near: {
             $geometry: {
                 type: "Point",
@@ -75,39 +75,86 @@ schema.statics.findSpot = function (query, limit, skip, purpose, budget, longitu
         }
     };
 
-    if(minScore !== undefined) queryObj.rating = {
+    if (minScore !== undefined) queryObj.rating = {
         $gte: minScore
     };
 
-    if(query !== undefined) queryObj.name = {'$regex':query};
-    if(address !== undefined) {
+    if (query !== undefined) queryObj.name = {'$regex': query};
+    if (address !== undefined) {
         queryObj.$or = [
-            {oldAddress:{'$regex':address}},
-            {roadAddress:{'$regex':address}}
+            {oldAddress: {'$regex': address}},
+            {roadAddress: {'$regex': address}}
         ]
     }
 
     return this.find(queryObj).skip(skip).limit(limit).populate({
-        path:'stars',
-        model:'stars',
+        path: 'stars',
+        model: 'stars',
         populate: {
-            path:'owner',
-            model:'users',
-            select:'-salt -hash -token'
+            path: 'owner',
+            model: 'users',
+            select: '-salt -hash -token'
         }
     }).exec().catch(err => {
-            throw {
-                message: "오류가 발생했습니다: " + err.message,
-                statusCode: 500
-            };
-        });
+        throw {
+            message: "오류가 발생했습니다: " + err.message,
+            statusCode: 500
+        };
+    });
+};
+
+
+schema.statics.countSpot = function (query, purpose, budget, longitude, latitude, maxDistance, minScore, address) {
+
+    var queryObj = {};
+
+    /* TODO
+     query       done
+     limit       done
+     skip        done
+     budget      yet
+     longitude   done
+     latitude    done
+     maxDistance done
+     minScore    done
+     address     done
+     */
+
+    if (longitude !== undefined && latitude !== undefined && maxDistance !== undefined) queryObj.location = {
+        $near: {
+            $geometry: {
+                type: "Point",
+                coordinates: [longitude, latitude]
+            },
+            $maxDistance: maxDistance
+        }
+    };
+
+    if (minScore !== undefined) queryObj.rating = {
+        $gte: minScore
+    };
+
+    if (query !== undefined) queryObj.name = {'$regex': query};
+    if (address !== undefined) {
+        queryObj.$or = [
+            {oldAddress: {'$regex': address}},
+            {roadAddress: {'$regex': address}}
+        ]
+    }
+
+    return this.count(queryObj).exec().catch(err => {
+        throw {
+            message: "오류가 발생했습니다: " + err.message,
+            statusCode: 500
+        };
+    });
 };
 
 
 /**
  * @param {Object} star
  */
-schema.statics.findSpotAndAddStar = function(star){
+schema.statics.findSpotAndAddStar = function (star) {
     return this.findById(star.spot).exec().then(spot => {
         var sum = (spot.stars !== undefined) ? spot.rating * spot.stars.length : 0;
         sum += star.score;
@@ -123,7 +170,7 @@ schema.statics.findSpotAndAddStar = function(star){
  * @param {number} newScore
  *
  */
-schema.statics.findSpotAndUpdateStar = function(oldStar, newScore){
+schema.statics.findSpotAndUpdateStar = function (oldStar, newScore) {
     return this.findById(oldStar.spot).exec().then(spot => {
         var sum = (spot.stars !== undefined) ? spot.rating * spot.stars.length : 0;
         sum -= oldStar.score;
@@ -135,7 +182,7 @@ schema.statics.findSpotAndUpdateStar = function(oldStar, newScore){
     });
 };
 
-schema.index({ location : '2dsphere'});
+schema.index({location: '2dsphere'});
 var model = mongoose.model('spots', schema);
 
 

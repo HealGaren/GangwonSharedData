@@ -21,8 +21,7 @@ router.get('', middleware.needToken(), middleware.parseParam.query([
     ['address', 'string'],
 ]), (req, res) => {
 
-    console.log(req.query.limit);
-
+    var result;
     //noinspection JSUnresolvedVariable
     mongo.Spot.findSpot(
         req.query.query, req.query.limit, req.query.skip,
@@ -30,8 +29,20 @@ router.get('', middleware.needToken(), middleware.parseParam.query([
         req.query.longitude, req.query.latitude, req.query.maxDistance,
         req.query.minScore, req.query.address
     )
-        .then(spots => {
-            res.send(spots);
+        .then(spots=>{
+            result = spots;
+            return mongo.Spot.countSpot(
+                req.query.query,
+                req.query.purpose, req.query.budget,
+                req.query.longitude, req.query.latitude, req.query.maxDistance,
+                req.query.minScore, req.query.address
+            )
+        })
+        .then(count => {
+            res.send({
+                result: result,
+                hasMore: count > req.query.skip + req.query.limit
+            });
         })
         .catch(err => {
             res.status(err.statusCode).send(err.message);
@@ -75,6 +86,7 @@ router.get('/:id/stars', middleware.needToken(), (req, res) => {
 
 router.post('/:id/stars', middleware.needToken(), middleware.parseParam.body([
     ['score', 'number', true],
+    ['title', 'string'],
     ['content', 'string']
 ]), (req, res) => {
 
@@ -94,11 +106,11 @@ router.post('/:id/stars', middleware.needToken(), middleware.parseParam.body([
         })
         .then(star => {
             if(star.length > 0){
-                return mongo.Star.updateStar(star[0]._id, req.body.score, req.body.content)
+                return mongo.Star.updateStar(star[0]._id, req.body.score, req.body.title, req.body.content)
                     .then(newStar =>  mongo.Spot.findSpotAndUpdateStar(star[0], req.body.score));
             }
             else {
-                return mongo.Star.newStar(req.body.score, req.body.content, req.user._id, spotId)
+                return mongo.Star.newStar(req.body.score, req.body.title, req.body.content, req.user._id, spotId)
                     .then(star => mongo.Spot.findSpotAndAddStar(star));
             }
         })
